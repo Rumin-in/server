@@ -3,7 +3,7 @@ import User from "../models/User.models.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 import { generateAccessToken, generateRefreshToken } from "../config/jwt.js";
-
+import jwt from "jsonwebtoken";
 export const registerUser = asyncHandler(async (req, res) => {
   try {
     const { name, email, mobileNo, password, role } = req.body;
@@ -86,26 +86,50 @@ export const loginUser = asyncHandler(async (req, res) => {
 });
 
 export const refreshAccessToken = asyncHandler(async (req, res) => {
-  const token = req.cookies.refreshToken;
-
-  if (!token) throw new ApiError(401, "No refresh token found");
-
-  jwt.verify(token, process.env.JWT_REFRESH_SECRET, (err, decoded) => {
-    if (err) throw new ApiError(403, "Invalid refresh token");
-
-    const accessToken = generateAccessToken(decoded.userId);
+  try {
+    const token = req.cookies.refreshToken;
+  
+    if (!token) throw new ApiError(401, "No refresh token found");
+  
+    jwt.verify(token, process.env.JWT_REFRESH_SECRET, (err, decoded) => {
+      if (err) throw new ApiError(403, "Invalid refresh token");
+  
+      const accessToken = generateAccessToken(decoded.userId);
+      res
+        .status(200)
+        .json(new ApiResponse(200, { accessToken }, "Token refreshed"));
+    });
+  } catch (error) {
     res
-      .status(200)
-      .json(new ApiResponse(200, { accessToken }, "Token refreshed"));
-  });
+      .status(error.statusCode || 500)
+      .json(
+        new ApiResponse(
+          error.statusCode || 500,
+          null,
+          error.message || "Internal Server Error"
+        )
+      );
+  }
 });
 
 export const logoutUser = asyncHandler(async (req, res) => {
-  res.clearCookie("refreshToken", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "Strict",
-  });
-
-  res.status(200).json(new ApiResponse(200, null, "Logged out successfully"));
+ try {
+   res.clearCookie("refreshToken", {
+     httpOnly: true,
+     secure: process.env.NODE_ENV === "production",
+     sameSite: "Strict",
+   });
+ 
+   res.status(200).json(new ApiResponse(200, null, "Logged out successfully"));
+ } catch (error) {
+  res
+    .status(error.statusCode || 500)
+    .json(
+      new ApiResponse(
+        error.statusCode || 500,
+        null,
+        error.message || "Internal Server Error"
+      )
+    );
+ }
 });

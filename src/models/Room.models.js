@@ -12,6 +12,10 @@ const roomSchema = new mongoose.Schema({
     address: { type: String, required: true },
     city: { type: String, required: true },
     state: { type: String, required: true },
+    coordinates: {
+      lat: { type: Number },
+      lng: { type: Number }
+    }
   },
   rent: {
     type: Number,

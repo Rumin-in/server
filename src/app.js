@@ -6,7 +6,8 @@ import cookieParser from 'cookie-parser';
 
 // Import routes
 import authRoutes from './routes/auth.routes.js';
-
+import roomRoutes from './routes/room.routes.js';
+import landlordRoutes from './routes/landlord.routes.js';
 
 const app = express();
 
@@ -24,5 +25,7 @@ app.get("/", (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/rooms', roomRoutes);
+app.use('/api/landlord', landlordRoutes);
 
 export default app;
