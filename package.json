@@ -1,0 +1,23 @@
+{
+  "dependencies": {
+    "cloudinary": "^2.6.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "helmet": "^8.1.0",
+    "mongoose": "^8.15.2",
+    "multer": "^2.0.1"
+  },
+  "name": "rumin-server",
+  "description": "��#\u0000 \u0000r\u0000u\u0000m\u0000i\u0000n\u0000-\u0000s\u0000e\u0000r\u0000v\u0000e\u0000r\u0000\r\u0000 \u0000",
+  "version": "1.0.0",
+  "main": "app.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js"
+  },
+  "author": "Sudhanshu Tiwari",
+  "license": "ISC"
+}
