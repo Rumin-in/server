@@ -26,12 +26,6 @@ const userSchema = new mongoose.Schema(
       enum: ["renter", "landlord", "admin"],
       default: "renter",
     },
-    bookmarkedRooms: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Room",
-      },
-    ],
   },
   { timestamps: true }
 );

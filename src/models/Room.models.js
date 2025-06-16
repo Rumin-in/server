@@ -29,8 +29,8 @@ const roomSchema = new mongoose.Schema({
   }],
   availabilityStatus: {
     type: String,
-    enum: ['available', 'booked', 'pending'],
-    default: 'available'
+    enum: ['available', 'booked', 'pending', 'rejected'],
+    default: 'pending'
   },
   landlordId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -40,7 +40,11 @@ const roomSchema = new mongoose.Schema({
   viewsCount: {
     type: Number,
     default: 0
-  }
+  },
+  bookmarks:[{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }]
 }, { timestamps: true });
 
 const Room = mongoose.model('Room', roomSchema);
