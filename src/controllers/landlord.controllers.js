@@ -5,7 +5,7 @@ import Room from "../models/Room.models.js";
 import { uploadOnCloudinary } from "../utils/uploadOnCloudinary.js";
 export const submitRoom = asyncHandler(async (req, res) => {
   try {
-    const { title, description, location, rent, amenities } = req.body;
+    const { title, description, location, rent, amenities, availabiltyDate } = req.body;
     const landlordId = req.user?._id;
     if (!landlordId) {
       throw new ApiError(401, "Unauthorized. Please log in.");
@@ -52,6 +52,7 @@ export const submitRoom = asyncHandler(async (req, res) => {
       images: cloudinaryImages,
       landlordId,
       availabilityStatus: "pending",
+      availabiltyDate: availabiltyDate || Date.now(),
     });
 
     const submittedRoom = await newRoom.save();

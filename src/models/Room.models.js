@@ -41,6 +41,10 @@ const roomSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  availabiltyDate:{
+    type: Date,
+    default: Date.now()
+  },
   bookmarks:[{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'

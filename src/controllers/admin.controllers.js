@@ -3,6 +3,10 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 import Interest from "../models/Interest.models.js";
+import User from "../models/User.models.js";
+import Issue from "../models/Issue.models.js";
+import Enquiry from "../models/Enquiries.models.js";
+import RedeemBalanceRequest from "../models/RedeemBalanceRequests.model.js";
 
 export const getAllListings = asyncHandler(async (req, res) => {
   const listings = await Room.find().populate("landlordId", "name email");
@@ -32,7 +36,6 @@ export const rejectListing = asyncHandler(async (req, res) => {
 
   res.status(200).json(new ApiResponse(200, {}, "Room listing rejected."));
 });
-
 
 export const updateListing = asyncHandler(async (req, res) => {
   const { id } = req.params;
@@ -66,7 +69,6 @@ export const markAsBooked = asyncHandler(async (req, res) => {
  }
 });
 
-
 export const getAdminAnalytics = asyncHandler(async (req, res) => {
   const totalListings = await Room.countDocuments();
   const approvedListings = await Room.countDocuments({ availabilityStatus: "available" });
@@ -89,4 +91,95 @@ export const getAdminAnalytics = asyncHandler(async (req, res) => {
   };
 
   res.status(200).json(new ApiResponse(200, analytics, "Admin analytics fetched successfully."));
+});
+
+export const addUserBalance = asyncHandler(async (req, res) => {
+  try {
+    const { userId, amount } = req.body;
+  
+    if (!userId || !amount) {
+      throw new ApiError(400, "User ID and amount are required.");
+    }
+  
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new ApiError(404, "User not found.");
+    }
+  
+    user.walletBalance = (user.walletBalance || 0) + amount;
+    await user.save();
+  
+    res.status(200).json(new ApiResponse(200, { balance: user.walletBalance }, "User balance updated successfully."));
+  
+  } catch (error) {
+    console.error("Error adding user balance:", error);
+    res.status(500).json(new ApiError(500, "Internal server error while updating user balance."));
+}});
+
+export const getAllIssues = asyncHandler(async (req, res) => {
+    try {
+      const issues = await Issue.find();
+      if (!issues || issues.length === 0) {
+        return res.status(404).json(new ApiError(404, "No issues found."));
+      }
+      res.status(200).json(new ApiResponse(200, { issues }, "All issues fetched successfully."));
+    } catch (error) {
+      console.error("Error fetching issues:", error);
+      res.status(500).json(new ApiError(500, "Internal server error while fetching issues."));
+    }
+})
+
+export const getAllEnquiries = asyncHandler(async (req, res) => {
+    try{
+      const enquiries = await Enquiry.find();
+      if (!enquiries || enquiries.length === 0) {
+        return res.status(404).json(new ApiError(404, "No enquiries found."));
+      }
+      res.status(200).json(new ApiResponse(200, { enquiries }, "All enquiries fetched successfully."));
+    } catch (error) {
+      console.error("Error fetching enquiries:", error);
+      res.status(500).json(new ApiError(500, "Internal server error while fetching enquiries."));   
+    }
+});
+
+export const getAllBalanceRequests = asyncHandler(async (req, res) => {
+  try {
+    const requests = await RedeemBalanceRequest.find();
+    if (!requests || requests.length === 0) { 
+      return res.status(404).json(new ApiError(404, "No redeem balance requests found."));
+    }
+    res.status(200).json(new ApiResponse(200, { requests }, "All redeem balance requests fetched successfully."));
+  } catch (error) {
+    console.error("Error fetching redeem balance requests:", error);
+    res.status(500).json(new ApiError(500, "Internal server error while fetching redeem balance requests."));
+  }
+});
+
+export const handleBalanceRequest = asyncHandler(async (req, res) => {
+  try {
+    const { requestId, action } = req.body;
+
+    if (!requestId || !action) {
+      throw new ApiError(400, "Request ID and action are required.");
+    }
+
+    const request = await RedeemBalanceRequest.findById(requestId);
+    if (!request) {
+      throw new ApiError(404, "Redeem balance request not found.");
+    }
+
+    if (action === "approve") {
+      request.status = "approved";
+    } else if (action === "reject") {
+      request.status = "rejected";
+    } else {
+      throw new ApiError(400, "Invalid action. Use 'approve' or 'reject'.");
+    }
+
+    await request.save();
+    res.status(200).json(new ApiResponse(200, { request }, `Redeem balance request ${action}d successfully.`));
+  } catch (error) {
+    console.error("Error handling redeem balance request:", error);
+    res.status(500).json(new ApiError(500, "Internal server error while handling redeem balance request."));
+  }
 });
