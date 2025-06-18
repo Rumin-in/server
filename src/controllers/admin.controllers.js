@@ -37,18 +37,43 @@ export const rejectListing = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, {}, "Room listing rejected."));
 });
 
+import Room from "../models/Room.models.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { ApiError } from "../utils/ApiError.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
+
 export const updateListing = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const updatedRoomData = req.body;
 
-  const updatedRoom = await Room.findByIdAndUpdate(id, updatedRoomData, {
-    new: true,
-    runValidators: true,
+  const room = await Room.findById(id);
+  if (!room) throw new ApiError(404, "Room not found.");
+
+  const previousSnapshot = {
+    updatedAt: new Date(),
+    data: {
+      title: room.title,
+      description: room.description,
+      location: room.location,
+      rent: room.rent,
+      amenities: room.amenities,
+      images: room.images,
+      availabilityStatus: room.availabilityStatus,
+      availabiltyDate: room.availabiltyDate,
+    },
+  };
+
+  room.history = [previousSnapshot, ...(room.history || [])].slice(0, 3);
+
+  Object.keys(updatedRoomData).forEach((key) => {
+    room[key] = updatedRoomData[key];
   });
 
-  if (!updatedRoom) throw new ApiError(404, "Room not found.");
+  const updatedRoom = await room.save();
 
-  res.status(200).json(new ApiResponse(200, { updatedRoom }, "Room listing updated successfully."));
+  res.status(200).json(
+    new ApiResponse(200, { updatedRoom }, "Room listing updated successfully.")
+  );
 });
 
 export const markAsBooked = asyncHandler(async (req, res) => {
@@ -155,4 +180,3 @@ export const getAllReferredRooms = asyncHandler(async (req, res) => {
     res.status(500).json(new ApiError(500, "Internal server error while fetching available rooms."));
   }
 });
-

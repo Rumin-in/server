@@ -2,7 +2,8 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 import Room from "../models/Room.models.js";
-import { uploadOnCloudinary } from "../utils/uploadOnCloudinary.js";
+
+
 export const submitRoom = asyncHandler(async (req, res) => {
   try {
     const { title, description, location, rent, amenities, availabiltyDate } = req.body;

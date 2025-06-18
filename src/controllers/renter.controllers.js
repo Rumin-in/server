@@ -211,3 +211,31 @@ export const referRoom = asyncHandler(async (req, res) => {
     res.status(500).json(new ApiError(500, "Internal server error."));
   }
 })
+
+export const getNearByRooms = asyncHandler(async (req, res) => {
+  try {
+    const { lat, lng, maxDistance = 5000 } = req.query;
+
+    if (!lat || !lng) {
+      throw new ApiError(400, "Latitude and longitude are required.");
+    }
+
+    const nearbyRooms = await Room.find({
+      "location.coordinates": {
+        $near: {
+          $geometry: {
+            type: "Point",
+            coordinates: [parseFloat(lng), parseFloat(lat)]
+          },
+          $maxDistance: parseInt(maxDistance)
+        }
+      }
+    });
+
+    res.status(200).json(
+      new ApiResponse(200, nearbyRooms, "Nearby rooms fetched successfully.")
+    );
+  } catch (error) {
+    throw new ApiError(500, "Failed to fetch nearby rooms.");
+  }
+});

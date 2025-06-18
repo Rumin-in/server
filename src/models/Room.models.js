@@ -9,14 +9,21 @@ const roomSchema = new mongoose.Schema({
     type: String
   },
   location: {
-    address: { type: String, required: true },
-    city: { type: String, required: true },
-    state: { type: String, required: true },
+  address: { type: String, required: true },
+  city: { type: String, required: true },
+  state: { type: String, required: true },
+  coordinates: {
+    type: {
+      type: String,
+      enum: ['Point'],
+      default: 'Point'
+    },
     coordinates: {
-      lat: { type: Number },
-      lng: { type: Number }
+      type: [Number], // [longitude, latitude]
+      required: true
     }
-  },
+  }
+},
   rent: {
     type: Number,
     required: true
@@ -27,6 +34,12 @@ const roomSchema = new mongoose.Schema({
   images: [{
     type: String
   }],
+   history: [
+    {
+      updatedAt: { type: Date, default: Date.now },
+      data: mongoose.Schema.Types.Mixed, 
+    },
+  ],
   availabilityStatus: {
     type: String,
     enum: ['available', 'booked', 'pending', 'rejected'],
@@ -50,6 +63,10 @@ const roomSchema = new mongoose.Schema({
     ref: 'User'
   }]
 }, { timestamps: true });
+
+
+roomSchema.index({ "location.coordinates": "2dsphere" });
+
 
 const Room = mongoose.model('Room', roomSchema);
 export default Room;
