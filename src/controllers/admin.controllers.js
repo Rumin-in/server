@@ -1,12 +1,12 @@
-import Room from "../models/Room.models.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 import Interest from "../models/Interest.models.js";
+import Room from "../models/Room.models.js";
 import User from "../models/User.models.js";
 import Issue from "../models/Issue.models.js";
 import Enquiry from "../models/Enquiries.models.js";
-import RedeemBalanceRequest from "../models/RedeemBalanceRequests.model.js";
+import Referral from "../models/Referral.models.js";
 
 export const getAllListings = asyncHandler(async (req, res) => {
   const listings = await Room.find().populate("landlordId", "name email");
@@ -142,44 +142,17 @@ export const getAllEnquiries = asyncHandler(async (req, res) => {
     }
 });
 
-export const getAllBalanceRequests = asyncHandler(async (req, res) => {
+
+export const getAllReferredRooms = asyncHandler(async (req, res) => {
   try {
-    const requests = await RedeemBalanceRequest.find();
-    if (!requests || requests.length === 0) { 
-      return res.status(404).json(new ApiError(404, "No redeem balance requests found."));
+    const referredRooms = await Referral.find();
+    if (!referredRooms || referredRooms.length === 0) {
+      return res.status(404).json(new ApiError(404, "No referred rooms found."));
     }
-    res.status(200).json(new ApiResponse(200, { requests }, "All redeem balance requests fetched successfully."));
+    res.status(200).json(new ApiResponse(200, { referredRooms }, "All referred rooms fetched successfully."));
   } catch (error) {
-    console.error("Error fetching redeem balance requests:", error);
-    res.status(500).json(new ApiError(500, "Internal server error while fetching redeem balance requests."));
+    console.error("Error fetching available rooms:", error);
+    res.status(500).json(new ApiError(500, "Internal server error while fetching available rooms."));
   }
 });
 
-export const handleBalanceRequest = asyncHandler(async (req, res) => {
-  try {
-    const { requestId, action } = req.body;
-
-    if (!requestId || !action) {
-      throw new ApiError(400, "Request ID and action are required.");
-    }
-
-    const request = await RedeemBalanceRequest.findById(requestId);
-    if (!request) {
-      throw new ApiError(404, "Redeem balance request not found.");
-    }
-
-    if (action === "approve") {
-      request.status = "approved";
-    } else if (action === "reject") {
-      request.status = "rejected";
-    } else {
-      throw new ApiError(400, "Invalid action. Use 'approve' or 'reject'.");
-    }
-
-    await request.save();
-    res.status(200).json(new ApiResponse(200, { request }, `Redeem balance request ${action}d successfully.`));
-  } catch (error) {
-    console.error("Error handling redeem balance request:", error);
-    res.status(500).json(new ApiError(500, "Internal server error while handling redeem balance request."));
-  }
-});

@@ -4,6 +4,8 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 import { generateAccessToken, generateRefreshToken } from "../config/jwt.js";
 import jwt from "jsonwebtoken";
+
+
 export const registerUser = asyncHandler(async (req, res) => {
   try {
     const { name, email, mobileNo, password, role } = req.body;

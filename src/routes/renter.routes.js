@@ -6,7 +6,6 @@ import {
   getBookmarks,
   enquire,
    reportIssue,
-  redeemBalance,
 } from "../controllers/renter.controllers.js"; 
 
 const router = Router();
@@ -23,6 +22,5 @@ router.get("/bookmarks/:id", getBookmarks);
 
 router.post("/issues/report", reportIssue);
 
-router.post("/wallet/redeem", redeemBalance);
 
 export default router;

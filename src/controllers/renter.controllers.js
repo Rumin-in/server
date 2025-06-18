@@ -5,8 +5,7 @@ import { ApiError } from "../utils/ApiError.js";
 import Interest from "../models/Interest.models.js";
 import Issue from "../models/Issue.models.js";
 import Enquiry from "../models/Enquiries.models.js";
-import User from "../models/User.models.js";
-import RedeemBalanceRequest from "../models/RedeemBalanceRequests.model.js";
+import Referral from "../models/Referral.models.js";
 
 export const expressInterest = asyncHandler(async (req, res) => {
   const roomId = req.params.id;
@@ -183,43 +182,32 @@ export const reportIssue = asyncHandler(async (req, res) => {
  }
 });
 
-export const redeemBalance = asyncHandler(async (req, res) => {
+export const referRoom = asyncHandler(async (req, res) => {
   try {
-    const { userId, amount } = req.body;
+    const { referrerId, landlordName, landlordMobileNo, location, rent, amenities, images } = req.body;
 
-    if (!userId || !amount) {
-      throw new ApiError(400, "User ID and amount are required.");
+    if (!referrerId || !landlordName || !landlordMobileNo || !location) {
+      throw new ApiError(400, "All fields are required.");
     }
 
-    const user = await User.findById(userId);
-    if (!user) {
-      throw new ApiError(404, "User not found.");
-    }
-
-    if(amount<500){
-      throw new ApiError(400, "Minimum redeemable amount is 500.");
-    }
-
-    if (user.walletBalance < amount) {
-      throw new ApiError(400, "Insufficient balance.");
-    }
-
-
-    const balaceRequest = await RedeemBalanceRequest.create({
-      amount,
-      userId: user._id,
-      status: "pending"
+    const referral = await Referral.create({
+      referrer: referrerId,
+      landlordName,
+      landlordMobileNo,
+      location,
+      rent,
+      amenities: amenities || [],
+      images: images || []
     });
 
-    if (!balaceRequest) {
-      throw new ApiError(500, "Failed to create redeem balance request.");
+    if (!referral) {
+      throw new ApiError(500, "Failed to create referral.");
     }
 
-    await balaceRequest.save();
-
-    res.status(200).json(new ApiResponse(200, {}, "Wallet balance redeem request sent !"));
+    await referral.save();
+    res.status(201).json(new ApiResponse(201, referral, "Referral created successfully."));
   } catch (error) {
-    console.error("Error redeeming balance:", error);
+    console.error("Error in referRoom:", error);
     res.status(500).json(new ApiError(500, "Internal server error."));
   }
-});
+})

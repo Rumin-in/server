@@ -9,8 +9,6 @@ import {
   addUserBalance,
   getAllIssues,
   getAllEnquiries,
-  getAllBalanceRequests,
-  handleBalanceRequest,
 } from "../controllers/admin.controllers.js";
 
 const router = Router();
@@ -24,7 +22,5 @@ router.get("/listings/analytics", getAdminAnalytics);
 router.post("/user/balance", addUserBalance);
 router.get("/issues", getAllIssues);
 router.get("/enquiries", getAllEnquiries);
-router.get("/balance-requests", getAllBalanceRequests);
-router.post("/balance-requests/handle", handleBalanceRequest);
 
 export default router;

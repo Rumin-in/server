@@ -10,6 +10,7 @@ import roomRoutes from './routes/room.routes.js';
 import landlordRoutes from './routes/landlord.routes.js';
 import renterRoutes from './routes/renter.routes.js';
 import adminRoutes from './routes/admin.routes.js';
+import WalletAndCoupanRoutes from './routes/walletAndCoupan.routes.js';
 
 const app = express();
 
@@ -31,5 +32,6 @@ app.use('/api/rooms', roomRoutes);
 app.use('/api/landlord', landlordRoutes);
 app.use('/api/renter', renterRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/walletAndCoupan', WalletAndCoupanRoutes);
 
 export default app;
