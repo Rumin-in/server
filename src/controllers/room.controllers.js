@@ -20,9 +20,7 @@ export const getAllRooms = asyncHandler(async (req, res) => {
       query.amenities = { $all: amenitiesArray };
     }
 
-    if (availability !== undefined) {
-      query.isAvailable = availability === "true";
-    }
+    query.availabilityStatus = "available";
 
     const rooms = await Room.find(query);
     res.status(200).json(new ApiResponse(200, { rooms }, "Rooms fetched"));
@@ -66,4 +64,3 @@ export const getRoomById = asyncHandler(async (req, res) => {
       );
   }
 });
-

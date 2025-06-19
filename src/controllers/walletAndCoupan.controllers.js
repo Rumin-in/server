@@ -5,12 +5,11 @@ import Coupon from "../models/Coupons.models.js";
 import RedeemBalanceRequest from "../models/RedeemBalanceRequests.model.js";
 import User from "../models/User.models.js";
 
-
 export const createCoupon = asyncHandler(async (req, res) => {
   try {
     const { code, discountPercent, validTill, minRent, usageLimit } = req.body;
 
-    if (!code || !discount || !expiryDate || !minRent || !usageLimit) {
+    if (!code || !discountPercent || !validTill || !minRent || !usageLimit) {
       throw new ApiError(400, "Missing required coupon details.");
     }
     const existingCoupon = await Coupon.findOne({ code });
@@ -27,6 +26,7 @@ export const createCoupon = asyncHandler(async (req, res) => {
       usageLimit,
     });
 
+    await newCoupon.save();
     res
       .status(201)
       .json(new ApiResponse(201, newCoupon, "Coupon created successfully."));
@@ -42,10 +42,16 @@ export const getAllCoupons = asyncHandler(async (req, res) => {
     if (!coupons || coupons.length === 0) {
       return res.status(404).json(new ApiError(404, "No coupons found."));
     }
-    res.status(200).json(new ApiResponse(200, { coupons }, "All coupons fetched successfully."));
+    res
+      .status(200)
+      .json(
+        new ApiResponse(200, { coupons }, "All coupons fetched successfully.")
+      );
   } catch (error) {
     console.error("Error fetching coupons:", error);
-    res.status(500).json(new ApiError(500, "Internal server error while fetching coupons."));
+    res
+      .status(500)
+      .json(new ApiError(500, "Internal server error while fetching coupons."));
   }
 });
 
@@ -62,10 +68,14 @@ export const deleteCoupon = asyncHandler(async (req, res) => {
       throw new ApiError(404, "Coupon not found.");
     }
 
-    res.status(200).json(new ApiResponse(200, {}, "Coupon deleted successfully."));
+    res
+      .status(200)
+      .json(new ApiResponse(200, {}, "Coupon deleted successfully."));
   } catch (error) {
     console.error("Error deleting coupon:", error);
-    res.status(500).json(new ApiError(500, "Internal server error while deleting coupon."));
+    res
+      .status(500)
+      .json(new ApiError(500, "Internal server error while deleting coupon."));
   }
 });
 
@@ -94,10 +104,16 @@ export const updateCoupon = asyncHandler(async (req, res) => {
       throw new ApiError(404, "Coupon not found.");
     }
 
-    res.status(200).json(new ApiResponse(200, updatedCoupon, "Coupon updated successfully."));
+    res
+      .status(200)
+      .json(
+        new ApiResponse(200, updatedCoupon, "Coupon updated successfully.")
+      );
   } catch (error) {
     console.error("Error updating coupon:", error);
-    res.status(500).json(new ApiError(500, "Internal server error while updating coupon."));
+    res
+      .status(500)
+      .json(new ApiError(500, "Internal server error while updating coupon."));
   }
 });
 
@@ -107,7 +123,7 @@ export const applyCoupon = asyncHandler(async (req, res) => {
 
     if (!code || !rent) {
       throw new ApiError(400, "Coupon code and rent amount are required.");
-    }       
+    }
 
     const coupon = await Coupon.findOne({ code });
     if (!coupon) {
@@ -119,27 +135,53 @@ export const applyCoupon = asyncHandler(async (req, res) => {
     }
 
     if (rent < coupon.minRent) {
-      throw new ApiError(400, `Minimum rent for this coupon is ${coupon.minRent}.`);
+      throw new ApiError(
+        400,
+        `Minimum rent for this coupon is ${coupon.minRent}.`
+      );
     }
 
     const discountAmount = (rent * coupon.discountPercent) / 100;
-    res.status(200).json(new ApiResponse(200, { discountAmount }, "Coupon applied successfully."));
+    res
+      .status(200)
+      .json(
+        new ApiResponse(200, { discountAmount }, "Coupon applied successfully.")
+      );
   } catch (error) {
     console.error("Error applying coupon:", error);
-    res.status(500).json(new ApiError(500, "Internal server error while applying coupon."));
+    res
+      .status(500)
+      .json(new ApiError(500, "Internal server error while applying coupon."));
   }
-})
+});
 
 export const getAllBalanceRequests = asyncHandler(async (req, res) => {
   try {
     const requests = await RedeemBalanceRequest.find();
-    if (!requests || requests.length === 0) { 
-      return res.status(404).json(new ApiError(404, "No redeem balance requests found."));
+    if (!requests || requests.length === 0) {
+      return res
+        .status(404)
+        .json(new ApiError(404, "No redeem balance requests found."));
     }
-    res.status(200).json(new ApiResponse(200, { requests }, "All redeem balance requests fetched successfully."));
+    res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          { requests },
+          "All redeem balance requests fetched successfully."
+        )
+      );
   } catch (error) {
     console.error("Error fetching redeem balance requests:", error);
-    res.status(500).json(new ApiError(500, "Internal server error while fetching redeem balance requests."));
+    res
+      .status(500)
+      .json(
+        new ApiError(
+          500,
+          "Internal server error while fetching redeem balance requests."
+        )
+      );
   }
 });
 
@@ -165,10 +207,25 @@ export const handleBalanceRequest = asyncHandler(async (req, res) => {
     }
 
     await request.save();
-    res.status(200).json(new ApiResponse(200, { request }, `Redeem balance request ${action}d successfully.`));
+    res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          { request },
+          `Redeem balance request ${action}d successfully.`
+        )
+      );
   } catch (error) {
     console.error("Error handling redeem balance request:", error);
-    res.status(500).json(new ApiError(500, "Internal server error while handling redeem balance request."));
+    res
+      .status(500)
+      .json(
+        new ApiError(
+          500,
+          "Internal server error while handling redeem balance request."
+        )
+      );
   }
 });
 
@@ -185,7 +242,7 @@ export const redeemBalance = asyncHandler(async (req, res) => {
       throw new ApiError(404, "User not found.");
     }
 
-    if(amount<500){
+    if (amount < 500) {
       throw new ApiError(400, "Minimum redeemable amount is 500.");
     }
 
@@ -193,11 +250,10 @@ export const redeemBalance = asyncHandler(async (req, res) => {
       throw new ApiError(400, "Insufficient balance.");
     }
 
-
     const balaceRequest = await RedeemBalanceRequest.create({
       amount,
       userId: user._id,
-      status: "pending"
+      status: "pending",
     });
 
     if (!balaceRequest) {
@@ -206,10 +262,48 @@ export const redeemBalance = asyncHandler(async (req, res) => {
 
     await balaceRequest.save();
 
-    res.status(200).json(new ApiResponse(200, {}, "Wallet balance redeem request sent !"));
+    res
+      .status(200)
+      .json(new ApiResponse(200, {}, "Wallet balance redeem request sent !"));
   } catch (error) {
     console.error("Error redeeming balance:", error);
     res.status(500).json(new ApiError(500, "Internal server error."));
   }
 });
 
+export const sendBalanceToWallet = asyncHandler(async (req, res) => {
+  try {
+    const { userId, amount } = req.body;
+
+    if (!userId || !amount) {
+      throw new ApiError(400, "User ID and amount are required.");
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new ApiError(404, "User not found.");
+    }
+
+    const numericAmount = Number(amount);
+    if (isNaN(numericAmount)) {
+      throw new ApiError(400, "Amount must be a valid number.");
+    }
+
+    user.walletBalance += numericAmount;
+    await user.save();
+
+    res
+      .status(200)
+      .json(new ApiResponse(200, {}, "Balance added to wallet successfully."));
+  } catch (error) {
+    console.error("Error adding balance to wallet:", error);
+    res
+      .status(500)
+      .json(
+        new ApiError(
+          500,
+          "Internal server error while adding balance to wallet."
+        )
+      );
+  }
+});

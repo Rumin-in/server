@@ -6,6 +6,8 @@ import {
   getBookmarks,
   enquire,
    reportIssue,
+   referRoom,
+   getNearByRooms,
 } from "../controllers/renter.controllers.js"; 
 
 const router = Router();
@@ -21,6 +23,10 @@ router.delete("/rooms/:id/bookmark", removeBookmark);
 router.get("/bookmarks/:id", getBookmarks);
 
 router.post("/issues/report", reportIssue);
+
+router.post("/rooms/refer", referRoom);
+
+router.post("/rooms/getNearbyRooms", getNearByRooms);
 
 
 export default router;

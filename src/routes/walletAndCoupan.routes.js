@@ -8,6 +8,7 @@ import {
   getAllBalanceRequests,
   handleBalanceRequest,
   redeemBalance,
+  sendBalanceToWallet,
 } from "../controllers/walletAndCoupan.controllers.js";
 
 
@@ -21,7 +22,8 @@ router.put("/coupon/:couponId", updateCoupon);          // Update coupon by ID
 router.post("/coupon/apply", applyCoupon);              // Apply coupon to rent
 
 // Wallet Balance Redeem Routes
-router.get("/redeem-requests", getAllBalanceRequests);  // Admin: View all redeem requests
+router.post("/send-balance", sendBalanceToWallet);     // Admin: Send balance to wallet
+router.get("/get-all-balance-request", getAllBalanceRequests);  // Admin: View all redeem requests
 router.post("/redeem-request", redeemBalance);          // User: Create redeem request
 router.put("/redeem-request/handle", handleBalanceRequest); // Admin: Approve or reject
 

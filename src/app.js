@@ -23,9 +23,7 @@ app.use(cookieParser());
 
 
 // Routes
-app.get("/", (req, res) => {
-  res.send("Welcome to the API!");
-});
+
 
 app.use('/api/auth', authRoutes);
 app.use('/api/rooms', roomRoutes);

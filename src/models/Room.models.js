@@ -19,7 +19,7 @@ const roomSchema = new mongoose.Schema({
       default: 'Point'
     },
     coordinates: {
-      type: [Number], // [longitude, latitude]
+      type: [Number], 
       required: true
     }
   }
@@ -65,7 +65,9 @@ const roomSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 
-roomSchema.index({ "location.coordinates": "2dsphere" });
+roomSchema.
+index
+({ "location.coordinates": "2dsphere" });
 
 
 const Room = mongoose.model('Room', roomSchema);

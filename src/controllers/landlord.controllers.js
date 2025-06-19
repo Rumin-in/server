@@ -3,27 +3,57 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 import Room from "../models/Room.models.js";
 
-
 export const submitRoom = asyncHandler(async (req, res) => {
   try {
-    const { title, description, location, rent, amenities, availabiltyDate } = req.body;
+    let {
+      title,
+      description,
+      address,
+      city,
+      state,
+      latitude,
+      longitude,
+      rent,
+      amenities,
+      availabiltyDate,
+    } = req.body;
+
     const landlordId = req.user?._id;
-    if (!landlordId) {
-      throw new ApiError(401, "Unauthorized. Please log in.");
-    }
+    if (!landlordId) throw new ApiError(401, "Unauthorized. Please log in.");
+
+    // Sanitize/parse
+    title = title?.trim();
+    description = description?.trim();
+    rent = Number(rent);
+    latitude = parseFloat(latitude);
+    longitude = parseFloat(longitude);
+    availabiltyDate = availabiltyDate?.trim();
+    amenities =
+      typeof amenities === "string" ? JSON.parse(amenities.trim()) : amenities;
 
     if (
       !title ||
-      !location ||
-      !location.address ||
-      !location.city ||
-      !location.state ||
+      !address ||
+      !city ||
+      !state ||
+      isNaN(latitude) ||
+      isNaN(longitude) ||
       !rent
     ) {
       throw new ApiError(400, "Missing required room details.");
     }
-    const cloudinaryImages = [];
 
+    const location = {
+      address,
+      city,
+      state,
+      coordinates: {
+        type: "Point",
+        coordinates: [longitude, latitude],
+      },
+    };
+
+    const cloudinaryImages = [];
     if (!req.files || req.files.length === 0) {
       throw new ApiError(
         400,
@@ -35,19 +65,13 @@ export const submitRoom = asyncHandler(async (req, res) => {
       if (!file?.path) {
         throw new ApiError(400, "Invalid image file.");
       }
-
       cloudinaryImages.push(file.path);
     }
 
     const newRoom = new Room({
       title,
       description: description || "",
-      location: {
-        address: location.address,
-        city: location.city,
-        state: location.state,
-        coordinates: location.coordinates || {},
-      },
+      location,
       rent,
       amenities: amenities || [],
       images: cloudinaryImages,
@@ -64,6 +88,7 @@ export const submitRoom = asyncHandler(async (req, res) => {
         new ApiResponse(201, { submittedRoom }, "Room submitted for review")
       );
   } catch (error) {
+    console.error("Submit room error:", error);
     res
       .status(error.statusCode || 500)
       .json(
