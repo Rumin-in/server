@@ -9,6 +9,7 @@ import {
    referRoom,
    getNearByRooms,
 } from "../controllers/renter.controllers.js"; 
+import { protect } from "../middlewares/authenticate.middlewares.js";
 
 const router = Router();
 
@@ -16,15 +17,15 @@ router.post("/enquire", enquire);
 
 router.post("/rooms/:id/interest", expressInterest);
 
-router.post("/rooms/:id/bookmark", addBookmarks);
+router.post("/rooms/:id/bookmark", protect, addBookmarks);
 
-router.delete("/rooms/:id/bookmark", removeBookmark);
+router.delete("/rooms/:id/bookmark", protect, removeBookmark);
 
-router.get("/bookmarks/:id", getBookmarks);
+router.get("/bookmarks/:id", protect, getBookmarks);
 
-router.post("/issues/report", reportIssue);
+router.post("/issues/report", protect, reportIssue);
 
-router.post("/rooms/refer", referRoom);
+router.post("/rooms/refer", protect, referRoom);
 
 router.post("/rooms/getNearbyRooms", getNearByRooms);
 

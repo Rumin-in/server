@@ -4,6 +4,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 import { generateAccessToken, generateRefreshToken } from "../config/jwt.js";
 import jwt from "jsonwebtoken";
+import Admin from "../models/Admins.models.js";
 
 export const registerUser = asyncHandler(async (req, res) => {
   try {
@@ -122,6 +123,108 @@ export const logoutUser = asyncHandler(async (req, res) => {
     });
 
     res.status(200).json(new ApiResponse(200, null, "Logged out successfully"));
+  } catch (error) {
+    res
+      .status(error.statusCode || 500)
+      .json(
+        new ApiResponse(
+          error.statusCode || 500,
+          null,
+          error.message || "Internal Server Error"
+        )
+      );
+  }
+});
+
+
+
+export const panelRegister = asyncHandler(async (req, res) => {
+  try{
+    const { name, email, mobileNo, password, role } = req.body;
+    if (!name || !email || !password || !role || !mobileNo) {
+      throw new ApiError(400, "All fields are required.");
+    }
+
+    // Check if user already exists
+    const existingUser = await Admin.findOne({ email });
+    if (existingUser) {
+      throw new ApiError(400, "Admin or Manager already exists with this email.");
+    }
+
+    const passkey =
+      role === "admin"
+        ? process.env.ADMIN_PASSKEY
+        : role === "manager"
+        ? process.env.MANAGER_PASSKEY
+        : null;
+
+    if (!passkey || password !== passkey) {
+      throw new ApiError(401, "Invalid passkey for the specified role.");
+    }
+    const user = new Admin({
+      name,
+      email,
+      passkey: password,
+      role,
+      mobileNo
+    });
+    await user.save();
+
+    res.status(201).json(
+      new ApiResponse(201, user, "Admin or Manager registered successfully")
+    );
+  } catch (error) {
+    res
+      .status(error.statusCode || 500)
+      .json(
+        new ApiResponse(
+          error.statusCode || 500,
+          null,
+          error.message || "Internal Server Error"
+        )
+      );
+  }
+});
+
+export const panelLogin = asyncHandler(async (req, res) => {
+  try {
+    const { email, passkey } = req.body;
+
+    if (!email || !passkey) {
+      throw new ApiError(400, "Email and passkey are required.");
+    }
+
+    const user = await Admin.findOne({ email });
+
+    if (!user || !["admin", "manager"].includes(user.role)) {
+      throw new ApiError(403, "Access restricted to admin or manager only.");
+    }
+
+    const isValidPasskey =
+      (user.role === "admin" && passkey === process.env.ADMIN_PASSKEY) ||
+      (user.role === "manager" && passkey === process.env.MANAGER_PASSKEY);
+
+    if (!isValidPasskey) {
+      throw new ApiError(401, "Invalid passkey.");
+    }
+
+    const accessToken = generateAccessToken(user._id);
+    const refreshToken = generateRefreshToken(user._id);
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    res.status(200).json(
+      new ApiResponse(200, {
+        user,
+        accessToken,
+      }, "Panel login successful")
+    );
+
   } catch (error) {
     res
       .status(error.statusCode || 500)

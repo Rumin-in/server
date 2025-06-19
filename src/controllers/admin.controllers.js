@@ -235,9 +235,6 @@ export const addUserBalance = asyncHandler(async (req, res) => {
 export const getAllIssues = asyncHandler(async (req, res) => {
   try {
     const issues = await Issue.find();
-    if (!issues || issues.length === 0) {
-      return res.status(404).json(new ApiError(404, "No issues found."));
-    }
     res
       .status(200)
       .json(

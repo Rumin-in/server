@@ -1,1 +1,0 @@
-// Authentications for admin panel
