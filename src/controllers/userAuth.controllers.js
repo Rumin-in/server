@@ -15,7 +15,7 @@ export const registerUser = asyncHandler(async (req, res) => {
       $or: [{ email: email }, { mobileNo: mobileNo }],
     });
     if (existingUser.length > 0) {
-      throw new ApiError(400, "User already exists with this email");
+      throw new ApiError(400, "User already exists with this email or mobile number.");
     }
 
     // Create new user

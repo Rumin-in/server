@@ -8,6 +8,7 @@ import {
    reportIssue,
    referRoom,
    getNearByRooms,
+   sendFeedback,
 } from "../controllers/renter.controllers.js"; 
 import { protect } from "../middlewares/authenticate.middlewares.js";
 
@@ -28,6 +29,8 @@ router.post("/issues/report", protect, reportIssue);
 router.post("/rooms/refer", protect, referRoom);
 
 router.post("/rooms/getNearbyRooms", getNearByRooms);
+
+router.post("/feedback", protect, sendFeedback);
 
 
 export default router;

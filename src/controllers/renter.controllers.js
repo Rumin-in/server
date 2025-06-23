@@ -275,3 +275,40 @@ export const getNearByRooms = asyncHandler(async (req, res) => {
     throw new ApiError(500, "Failed to fetch nearby rooms.");
   }
 });
+
+export const sendFeedback = asyncHandler(async (req, res) => {
+  try {
+    const {roomId, rating, comment} = req.body;
+    const userId = req.user?._id;
+
+    if (!userId) {
+      throw new ApiError(401, "User not authenticated.");
+    }
+    if (!roomId) {
+      throw new ApiError(400, "Room ID is required.");
+    }
+
+    const room = await Room.findById(roomId);
+    if (!room) {
+      throw new ApiError(404, "Room not found.");
+    }
+
+    room.feedbacks.push({
+      userId,
+      rating,
+      comment,
+    });
+
+    await room.save();
+
+    res
+      .status(201)
+      .json(new ApiResponse(201, room.feedbacks, "Feedback added successfully."));
+    
+
+  } catch (error) {
+    console.error("Error fetching feedback:", error);
+    res.status(500).json(new ApiError(500, "Internal server error."));
+    
+  }
+});
