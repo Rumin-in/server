@@ -9,7 +9,9 @@ import Admin from "../models/Admins.models.js";
 export const registerUser = asyncHandler(async (req, res) => {
   try {
     const { name, email, mobileNo, password, role } = req.body;
-
+    if(!name || !email || !password){
+      throw new ApiError(400, "Name, email, and password are required.");
+    }
     // Check if user already exists
     const existingUser = await User.find({
       $or: [{ email: email }, { mobileNo: mobileNo }],

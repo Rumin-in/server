@@ -14,7 +14,6 @@ const userSchema = new mongoose.Schema(
     },
     mobileNo: {
       type: String,
-      required: true,
       unique: true,
     },
     password: {
