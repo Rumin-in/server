@@ -8,6 +8,9 @@ const roomSchema = new mongoose.Schema({
   description: {
     type: String
   },
+  bhk:{
+    type: String,
+  },
   location: {
   address: { type: String, required: true },
   city: { type: String, required: true },

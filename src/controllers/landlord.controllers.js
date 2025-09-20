@@ -16,6 +16,7 @@ export const submitRoom = asyncHandler(async (req, res) => {
       rent,
       amenities,
       availabiltyDate,
+      bhk,
     } = req.body;
 
     const landlordId = req.user?._id;
@@ -73,6 +74,7 @@ export const submitRoom = asyncHandler(async (req, res) => {
       description: description || "",
       location,
       rent,
+      bhk: bhk || "",
       amenities: amenities || [],
       images: cloudinaryImages,
       landlordId,
