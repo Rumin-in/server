@@ -36,5 +36,7 @@ app.use('/api/landlord', landlordRoutes);
 app.use('/api/renter', renterRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/walletAndCoupan', WalletAndCoupanRoutes);
-
+app.get('/', (req, res) => {
+  res.send('Welcome to the Room Rental Service API');
+});
 export default app;
