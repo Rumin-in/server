@@ -11,6 +11,7 @@ import {
   getAllIssues,
   getAllEnquiries,
   updateImageOfListing,
+  getAllInterests,
 } from "../controllers/admin.controllers.js";
 import upload from "../config/multer.js";
 import { verifyPanelAccess } from "../middlewares/authorizeRole.middlewares.js";
@@ -29,6 +30,7 @@ router.get("/listings/analytics",verifyPanelAccess(["admin", "manager"]), getAdm
 router.post("/user/balance",verifyPanelAccess(["admin", "manager"]), addUserBalance);
 router.get("/issues",verifyPanelAccess(["admin", "manager"]), getAllIssues);
 router.get("/enquiries",verifyPanelAccess(["admin", "manager"]), getAllEnquiries);
+router.get("/interests",verifyPanelAccess(["admin", "manager"]), getAllInterests);
 
 
 

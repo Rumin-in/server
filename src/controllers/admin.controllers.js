@@ -328,3 +328,32 @@ export const getAllReferredRooms = asyncHandler(async (req, res) => {
       );
   }
 });
+
+export const getAllInterests = asyncHandler(async (req, res) => {
+  try {
+    const interests = await Interest.find()
+      .populate("userId", "name email mobileNo")
+      .populate("roomId", "title location rent bhk images availabilityStatus");
+    
+    if (!interests || interests.length === 0) {
+      return res.status(404).json(new ApiError(404, "No interests found."));
+    }
+    
+    res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          { interests },
+          "All interests fetched successfully."
+        )
+      );
+  } catch (error) {
+    console.error("Error fetching interests:", error);
+    res
+      .status(500)
+      .json(
+        new ApiError(500, "Internal server error while fetching interests.")
+      );
+  }
+});
