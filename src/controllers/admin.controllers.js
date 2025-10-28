@@ -165,6 +165,26 @@ export const markAsBooked = asyncHandler(async (req, res) => {
   }
 });
 
+export const unmarkAsBooked = asyncHandler(async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const room = await Room.findById(id);
+    if (!room) throw new ApiError(404, "Room not found.");
+
+    room.availabilityStatus = "available";
+    await room.save();
+
+    res.status(200).json(new ApiResponse(200, {}, "Room unmarked as booked."));
+  } catch (error) {
+    console.error("Error unmarking room as booked:", error);
+    throw new ApiError(
+      500,
+      "Internal server error while unmarking room as booked."
+    );
+  }
+});
+
 export const getAdminAnalytics = asyncHandler(async (req, res) => {
   const totalListings = await Room.countDocuments();
   const approvedListings = await Room.countDocuments({
@@ -199,13 +219,19 @@ export const getAdminAnalytics = asyncHandler(async (req, res) => {
 
 export const addUserBalance = asyncHandler(async (req, res) => {
   try {
-    const { userId, amount } = req.body;
+    const { userId, email, amount } = req.body;
 
-    if (!userId || !amount) {
-      throw new ApiError(400, "User ID and amount are required.");
+    if ((!userId && !email) || !amount) {
+      throw new ApiError(400, "User ID or Email and amount are required.");
     }
 
-    const user = await User.findById(userId);
+    let user;
+    if (email) {
+      user = await User.findOne({ email: email.toLowerCase() });
+    } else {
+      user = await User.findById(userId);
+    }
+
     if (!user) {
       throw new ApiError(404, "User not found.");
     }
@@ -218,7 +244,7 @@ export const addUserBalance = asyncHandler(async (req, res) => {
       .json(
         new ApiResponse(
           200,
-          { balance: user.walletBalance },
+          { balance: user.walletBalance, userId: user._id, email: user.email, name: user.name },
           "User balance updated successfully."
         )
       );

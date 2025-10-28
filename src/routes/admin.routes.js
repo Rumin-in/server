@@ -5,6 +5,7 @@ import {
   rejectListing,
   updateListing,
   markAsBooked,
+  unmarkAsBooked,
   getAdminAnalytics,
   addUserBalance,
   getAllIssues,
@@ -23,8 +24,9 @@ router.put("/listings/:id/reject",verifyPanelAccess(["admin", "manager"]), rejec
 router.put("/listings/:id",verifyPanelAccess(["admin", "manager"]), updateListing);
 router.put("/listings/:id/image",upload.array("images", 5),verifyPanelAccess(["admin", "manager"]),  updateImageOfListing);
 router.put("/listings/:id/book",verifyPanelAccess(["admin", "manager"]), markAsBooked);
+router.put("/listings/:id/unbook",verifyPanelAccess(["admin", "manager"]), unmarkAsBooked);
 router.get("/listings/analytics",verifyPanelAccess(["admin", "manager"]), getAdminAnalytics);
-router.post("/user/balance",verifyPanelAccess(["admin"]), addUserBalance);
+router.post("/user/balance",verifyPanelAccess(["admin", "manager"]), addUserBalance);
 router.get("/issues",verifyPanelAccess(["admin", "manager"]), getAllIssues);
 router.get("/enquiries",verifyPanelAccess(["admin", "manager"]), getAllEnquiries);
 
