@@ -12,22 +12,38 @@ export const registerUser = asyncHandler(async (req, res) => {
     if(!name || !email || !password){
       throw new ApiError(400, "Name, email, and password are required.");
     }
-    // Check if user already exists
-    const existingUser = await User.find({
-      $or: [{ email: email }, { mobileNo: mobileNo }],
-    });
-    if (existingUser.length > 0) {
-      throw new ApiError(400, "User already exists with this email or mobile number.");
+    
+    // Normalize email to lowercase
+    const normalizedEmail = email.toLowerCase().trim();
+    
+    // Check if user already exists with this email
+    const existingUserByEmail = await User.findOne({ email: normalizedEmail });
+    if (existingUserByEmail) {
+      throw new ApiError(400, "User already exists with this email.");
+    }
+    
+    // Check if user already exists with this mobile number (if provided)
+    if (mobileNo) {
+      const existingUserByMobile = await User.findOne({ mobileNo: mobileNo });
+      if (existingUserByMobile) {
+        throw new ApiError(400, "User already exists with this mobile number.");
+      }
     }
 
     // Create new user
-    const user = new User({
+    const userData = {
       name,
-      email,
-      mobileNo,
+      email: normalizedEmail,
       password,
       role,
-    });
+    };
+    
+    // Only add mobileNo if it's provided and not empty
+    if (mobileNo && mobileNo.trim()) {
+      userData.mobileNo = mobileNo.trim();
+    }
+    
+    const user = new User(userData);
     await user.save();
     res
       .status(201)
@@ -49,9 +65,15 @@ export const loginUser = asyncHandler(async (req, res) => {
   try {
     const { email, password, mobileNo } = req.body;
 
-    // Find user by email
+    // Normalize email to lowercase if provided
+    const normalizedEmail = email ? email.toLowerCase().trim() : null;
+
+    // Find user by email or mobile number
     const user = await User.findOne({
-      $or: [{ email: email }, { mobileNo: mobileNo }],
+      $or: [
+        ...(normalizedEmail ? [{ email: normalizedEmail }] : []),
+        ...(mobileNo ? [{ mobileNo: mobileNo }] : [])
+      ],
     });
     if (!user) {
       throw new ApiError(404, "User not found");
