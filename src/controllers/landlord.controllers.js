@@ -3,6 +3,30 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 import Room from "../models/Room.models.js";
 
+export const getLandlordRooms = asyncHandler(async (req, res) => {
+  try {
+    const landlordId = req.user?._id;
+    if (!landlordId) throw new ApiError(401, "Unauthorized. Please log in.");
+
+    const rooms = await Room.find({ landlordId }).sort({ createdAt: -1 });
+
+    res.status(200).json(
+      new ApiResponse(200, { rooms }, "Landlord rooms fetched successfully.")
+    );
+  } catch (error) {
+    console.error("Get landlord rooms error:", error);
+    res
+      .status(error.statusCode || 500)
+      .json(
+        new ApiResponse(
+          error.statusCode || 500,
+          null,
+          error.message || "Failed to fetch landlord rooms"
+        )
+      );
+  }
+});
+
 export const submitRoom = asyncHandler(async (req, res) => {
   try {
     let {
