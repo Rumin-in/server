@@ -216,6 +216,24 @@ export const getAdminAnalytics = asyncHandler(async (req, res) => {
       new ApiResponse(200, analytics, "Admin analytics fetched successfully.")
     );
 });
+export const getAllUsers = asyncHandler(async (req, res) => {
+  try {
+    const users = await User.find({}, "name email role walletBalance createdAt");
+    
+    if (!users || users.length === 0) {
+      return res.status(404).json(new ApiError(404, "No users found."));
+    }
+
+    res
+      .status(200)
+      .json(new ApiResponse(200, { users }, "All users fetched successfully."));
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    res
+      .status(500)
+      .json(new ApiError(500, "Internal server error while fetching users."));
+  }
+});
 
 export const addUserBalance = asyncHandler(async (req, res) => {
   try {
