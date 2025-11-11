@@ -261,3 +261,71 @@ export const panelLogin = asyncHandler(async (req, res) => {
       );
   }
 });
+
+
+
+export const updateUserProfile = asyncHandler(async (req, res) => {
+  try {
+    const userId = req.user?._id || req.body.userId; // from auth middleware or request
+    const { name, email, mobileNo, password } = req.body;
+
+    // Check if user exists
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+
+    // Prepare update data object only with valid, non-empty values
+    const updateData = {};
+
+    if (name && name.trim() && name !== user.name) {
+      updateData.name = name.trim();
+    }
+
+    if (email && email.trim().toLowerCase() !== user.email) {
+      const normalizedEmail = email.toLowerCase().trim();
+
+      // Check if new email already exists
+      const existingUser = await User.findOne({ email: normalizedEmail });
+      if (existingUser && existingUser._id.toString() !== userId.toString()) {
+        throw new ApiError(400, "Email already in use by another account");
+      }
+
+      updateData.email = normalizedEmail;
+    }
+
+    if (mobileNo && mobileNo.trim() !== user.mobileNo) {
+      const existingMobile = await User.findOne({ mobileNo: mobileNo.trim() });
+      if (existingMobile && existingMobile._id.toString() !== userId.toString()) {
+        throw new ApiError(400, "Mobile number already in use by another account");
+      }
+
+      updateData.mobileNo = mobileNo.trim();
+    }
+
+    if (password && password.trim()) {
+      updateData.password = password;
+    }
+
+    // If no data to update
+    if (Object.keys(updateData).length === 0) {
+      throw new ApiError(400, "No valid fields provided for update");
+    }
+
+    // Update user
+    Object.assign(user, updateData);
+    await user.save();
+
+    res.status(200).json(new ApiResponse(200, user, "Profile updated successfully"));
+  } catch (error) {
+    res
+      .status(error.statusCode || 500)
+      .json(
+        new ApiResponse(
+          error.statusCode || 500,
+          null,
+          error.message || "Internal Server Error"
+        )
+      );
+  }
+});
