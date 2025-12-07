@@ -21,7 +21,7 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:5173', 'https://rumin-five.vercel.app', "https://rumin.in", "https://www.rumin.in/"],
+  origin: ['http://localhost:5173', 'https://rumin-five.vercel.app', "https://rumin.in", "https://www.rumin.in"],
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   credentials: true,
 }));
