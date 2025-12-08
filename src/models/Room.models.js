@@ -85,6 +85,10 @@ const roomSchema = new mongoose.Schema({
       default: Date.now
     }
   }],
+  showReviews: {
+    type: Boolean,
+    default: true
+  },
 }, { timestamps: true });
 
 
