@@ -352,11 +352,11 @@ export const getAllInterests = asyncHandler(async (req, res) => {
     const interests = await Interest.find()
       .populate("userId", "name email mobileNo")
       .populate("roomId", "title location rent bhk images availabilityStatus");
-    
+
     if (!interests || interests.length === 0) {
       return res.status(404).json(new ApiError(404, "No interests found."));
     }
-    
+
     res
       .status(200)
       .json(
@@ -373,5 +373,130 @@ export const getAllInterests = asyncHandler(async (req, res) => {
       .json(
         new ApiError(500, "Internal server error while fetching interests.")
       );
+  }
+});
+
+export const createRoom = asyncHandler(async (req, res) => {
+  try {
+    let {
+      title,
+      description,
+      address,
+      city,
+      state,
+      latitude,
+      longitude,
+      rent,
+      amenities,
+      availabiltyDate,
+      bhk,
+      availabilityStatus,
+      landlordId,
+    } = req.body;
+
+    // Sanitize/parse
+    title = title?.trim();
+    description = description?.trim();
+    rent = Number(rent);
+    latitude = parseFloat(latitude);
+    longitude = parseFloat(longitude);
+    availabiltyDate = availabiltyDate?.trim();
+    amenities =
+      typeof amenities === "string" ? JSON.parse(amenities.trim()) : amenities;
+
+    if (
+      !title ||
+      !address ||
+      !city ||
+      !state ||
+      isNaN(latitude) ||
+      isNaN(longitude) ||
+      !rent
+    ) {
+      throw new ApiError(400, "Missing required room details.");
+    }
+
+    const location = {
+      address,
+      city,
+      state,
+      coordinates: {
+        type: "Point",
+        coordinates: [longitude, latitude],
+      },
+    };
+
+    const cloudinaryImages = [];
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        if (file?.path) {
+          cloudinaryImages.push(file.path);
+        }
+      }
+    }
+
+    // If no landlordId provided, use admin's id or a default system id
+    const ownerId = landlordId || req.user?._id;
+    if (!ownerId) {
+      throw new ApiError(400, "Landlord ID is required.");
+    }
+
+    const newRoom = new Room({
+      title,
+      description: description || "",
+      location,
+      rent,
+      bhk: bhk || "",
+      amenities: amenities || [],
+      images: cloudinaryImages,
+      landlordId: ownerId,
+      availabilityStatus: availabilityStatus || "available",
+      availabiltyDate: availabiltyDate || Date.now(),
+    });
+
+    const createdRoom = await newRoom.save();
+
+    res
+      .status(201)
+      .json(
+        new ApiResponse(201, { room: createdRoom }, "Room created successfully by admin.")
+      );
+  } catch (error) {
+    console.error("Admin create room error:", error);
+    throw new ApiError(
+      error.statusCode || 500,
+      error.message || "Failed to create room"
+    );
+  }
+});
+
+export const deleteListing = asyncHandler(async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const room = await Room.findById(id);
+    if (!room) throw new ApiError(404, "Room not found.");
+
+    // Delete images from Cloudinary
+    for (const imageUrl of room.images) {
+      try {
+        const publicId = extractPublicIdFromUrl(imageUrl);
+        await deleteFromCloudinary(publicId);
+      } catch (err) {
+        console.error("Error deleting image from cloudinary:", err);
+      }
+    }
+
+    await Room.findByIdAndDelete(id);
+
+    res
+      .status(200)
+      .json(new ApiResponse(200, {}, "Room listing deleted successfully."));
+  } catch (error) {
+    console.error("Error deleting listing:", error);
+    throw new ApiError(
+      500,
+      "Internal server error while deleting room listing."
+    );
   }
 });
