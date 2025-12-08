@@ -307,6 +307,11 @@ export const updateUserProfile = asyncHandler(async (req, res) => {
       updateData.password = password;
     }
 
+    // Handle profile picture upload from multer
+    if (req.file && req.file.path) {
+      updateData.profilePicture = req.file.path;
+    }
+
     // If no data to update
     if (Object.keys(updateData).length === 0) {
       throw new ApiError(400, "No valid fields provided for update");
