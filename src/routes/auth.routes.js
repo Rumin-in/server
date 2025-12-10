@@ -25,6 +25,18 @@ router.post("/panel/register", panelRegister);
 
 router.post("/panel/login", panelLogin);
 
-router.put("/profile", protect, upload.single("profilePicture"), updateUserProfile);
+router.put("/profile", protect, (req, res, next) => {
+  upload.single("profilePicture")(req, res, (err) => {
+    if (err) {
+      console.error("Multer/Cloudinary error:", err);
+      return res.status(500).json({
+        statusCode: 500,
+        data: null,
+        message: err.message || "File upload failed"
+      });
+    }
+    next();
+  });
+}, updateUserProfile);
 
 export default router;

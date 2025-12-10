@@ -117,14 +117,18 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
 
     if (!token) throw new ApiError(401, "No refresh token found");
 
-    jwt.verify(token, process.env.JWT_REFRESH_SECRET, (err, decoded) => {
-      if (err) throw new ApiError(403, "Invalid refresh token");
-
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
       const accessToken = generateAccessToken(decoded.userId);
       res
         .status(200)
         .json(new ApiResponse(200, { accessToken }, "Token refreshed"));
-    });
+    } catch (err) {
+      if (err.name === "TokenExpiredError") {
+        throw new ApiError(401, "Refresh token expired, please login again");
+      }
+      throw new ApiError(403, "Invalid refresh token");
+    }
   } catch (error) {
     res
       .status(error.statusCode || 500)

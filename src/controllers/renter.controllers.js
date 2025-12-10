@@ -148,16 +148,16 @@ export const getBookmarks = asyncHandler(async (req, res) => {
     }
 
     const rooms = await Room.find({ bookmarks: userId });
-    if (!rooms || rooms.length === 0) {
-      return res
-        .status(404)
-        .json(new ApiResponse(404, {}, "No bookmarked rooms found."));
-    }
 
+    // Return 200 with empty array if no bookmarks (not 404)
     res
       .status(200)
       .json(
-        new ApiResponse(200, rooms, "Bookmarked rooms retrieved successfully.")
+        new ApiResponse(
+          200,
+          rooms || [],
+          rooms?.length ? "Bookmarked rooms retrieved successfully." : "No bookmarked rooms found."
+        )
       );
   } catch (error) {
     console.error("Error retrieving bookmarks:", error);
