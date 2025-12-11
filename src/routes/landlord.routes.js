@@ -1,4 +1,4 @@
-import Router from 'express';
+import { Router } from 'express';
 import { submitRoom, getLandlordRooms } from '../controllers/landlord.controllers.js';
 import upload from '../config/multer.js';
 import { protect } from '../middlewares/authenticate.middlewares.js';
