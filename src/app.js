@@ -66,6 +66,7 @@ connectDB()
     console.log('✅ Database connected successfully');
     app.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
+      console.log(`🌐 Access the API at https://api.rumin.in`);
     });
   })
   .catch((error) => {
