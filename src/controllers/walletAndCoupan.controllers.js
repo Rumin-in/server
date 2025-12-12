@@ -39,13 +39,14 @@ export const createCoupon = asyncHandler(async (req, res) => {
 export const getAllCoupons = asyncHandler(async (req, res) => {
   try {
     const coupons = await Coupon.find();
-    if (!coupons || coupons.length === 0) {
-      return res.status(404).json(new ApiError(404, "No coupons found."));
-    }
     res
       .status(200)
       .json(
-        new ApiResponse(200, { coupons }, "All coupons fetched successfully.")
+        new ApiResponse(
+          200,
+          { coupons: coupons || [] },
+          coupons?.length ? "All coupons fetched successfully." : "No coupons found."
+        )
       );
   } catch (error) {
     console.error("Error fetching coupons:", error);

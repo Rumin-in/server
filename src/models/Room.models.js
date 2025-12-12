@@ -51,7 +51,7 @@ const roomSchema = new mongoose.Schema({
   landlordId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    default: null
   },
   viewsCount: {
     type: Number,
