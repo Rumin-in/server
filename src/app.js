@@ -1,5 +1,4 @@
 import express from 'express';
-import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import connectDB from './config/db.js';
@@ -18,19 +17,33 @@ dotenv.config({ path: './.env' });
 // Initialize express
 const app = express();
 
-// Middleware
-app.use(cors({
-  origin: ['http://localhost:5173', 'https://rumin-five.vercel.app', "https://rumin.in", "https://www.rumin.in"],
-  methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
-}));
+// Manual CORS middleware - more reliable than cors package with reverse proxies
+app.use((req, res, next) => {
+  const allowedOrigins = [
+    'http://localhost:5173',
+    'https://rumin-five.vercel.app',
+    'https://rumin.in',
+    'https://www.rumin.in'
+  ];
+  const origin = req.headers.origin;
 
-// Handle preflight requests
-app.options('/{*path}', cors());
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+  // Handle preflight requests immediately
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  next();
+});
+
+// Body parsers with increased limits for file uploads
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(cookieParser());
 
 // Routes
