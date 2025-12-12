@@ -87,7 +87,13 @@ const roomSchema = new mongoose.Schema({
   }],
   showReviews: {
     type: Boolean,
-    default: true
+    default: false
+  },
+  adminRating: {
+    type: Number,
+    min: 1,
+    max: 5,
+    default: null
   },
 }, { timestamps: true });
 
