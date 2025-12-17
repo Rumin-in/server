@@ -6,6 +6,7 @@ import connectDB from './config/db.js';
 // Import routes
 import authRoutes from './routes/auth.routes.js';
 import roomRoutes from './routes/room.routes.js';
+import hostelRoutes from './routes/hostel.routes.js';
 import landlordRoutes from './routes/landlord.routes.js';
 import renterRoutes from './routes/renter.routes.js';
 import adminRoutes from './routes/admin.routes.js';
@@ -49,6 +50,7 @@ app.use(cookieParser());
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/rooms', roomRoutes);
+app.use('/api/hostels', hostelRoutes);
 app.use('/api/landlord', landlordRoutes);
 app.use('/api/renter', renterRoutes);
 app.use('/api/admin', adminRoutes);

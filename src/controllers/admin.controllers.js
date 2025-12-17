@@ -351,7 +351,8 @@ export const getAllInterests = asyncHandler(async (req, res) => {
   try {
     const interests = await Interest.find()
       .populate("userId", "name email mobileNo")
-      .populate("roomId", "title location rent bhk images availabilityStatus");
+      .populate("roomId", "title location rent bhk images availabilityStatus")
+      .populate("hostelId", "title location rentPerBed hostelType images availabilityStatus totalBeds availableBeds");
 
     res
       .status(200)

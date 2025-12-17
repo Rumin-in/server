@@ -9,6 +9,16 @@ const interestSchema = new mongoose.Schema({
   roomId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Room',
+    required: false
+  },
+  hostelId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Hostel',
+    required: false
+  },
+  itemType: {
+    type: String,
+    enum: ['room', 'hostel'],
     required: true
   },
   type: {
@@ -22,9 +32,18 @@ const interestSchema = new mongoose.Schema({
     default: 'pending'
   },
   notes: {
-    type: String 
+    type: String
   }
 }, { timestamps: true });
+
+// Ensure at least one of roomId or hostelId is present
+interestSchema.pre('save', function(next) {
+  if (!this.roomId && !this.hostelId) {
+    next(new Error('Either roomId or hostelId must be provided'));
+  } else {
+    next();
+  }
+});
 
 const Interest = mongoose.model('Interest', interestSchema);
 export default Interest;

@@ -1,4 +1,5 @@
 import Room from "../models/Room.models.js";
+import Hostel from "../models/Hostel.models.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
@@ -8,22 +9,41 @@ import Enquiry from "../models/Enquiries.models.js";
 import Referral from "../models/Referral.models.js";
 
 export const expressInterest = asyncHandler(async (req, res) => {
-  const roomId = req.params.id;
-  const { userId, interestType, notes } = req.body;
+  const itemId = req.params.id;
+  const { userId, interestType, notes, itemType } = req.body;
 
   if (!userId || !["visit", "book"].includes(interestType)) {
     throw new ApiError(400, "Invalid user ID or interest type.");
   }
 
-  const room = await Room.findById(roomId);
-  if (!room) throw new ApiError(404, "Room not found.");
+  if (!itemType || !["room", "hostel"].includes(itemType)) {
+    throw new ApiError(400, "Invalid item type. Must be 'room' or 'hostel'.");
+  }
+
+  // Check if the item exists
+  let item;
+  if (itemType === "room") {
+    item = await Room.findById(itemId);
+    if (!item) throw new ApiError(404, "Room not found.");
+  } else if (itemType === "hostel") {
+    item = await Hostel.findById(itemId);
+    if (!item) throw new ApiError(404, "Hostel not found.");
+  }
 
   // Check if interest already exists
-  const existingInterest = await Interest.findOne({
+  const query = {
     userId,
-    roomId,
     type: interestType,
-  });
+    itemType
+  };
+
+  if (itemType === "room") {
+    query.roomId = itemId;
+  } else {
+    query.hostelId = itemId;
+  }
+
+  const existingInterest = await Interest.findOne(query);
 
   if (existingInterest) {
     return res
@@ -32,12 +52,20 @@ export const expressInterest = asyncHandler(async (req, res) => {
   }
 
   // Create new interest
-  const interest = await Interest.create({
+  const interestData = {
     userId,
-    roomId,
     type: interestType,
+    itemType,
     notes: notes || "",
-  });
+  };
+
+  if (itemType === "room") {
+    interestData.roomId = itemId;
+  } else {
+    interestData.hostelId = itemId;
+  }
+
+  const interest = await Interest.create(interestData);
 
   res
     .status(201)
