@@ -5,23 +5,24 @@ import { ApiError } from "../utils/ApiError.js";
 import { generateAccessToken, generateRefreshToken } from "../config/jwt.js";
 import jwt from "jsonwebtoken";
 import Admin from "../models/Admins.models.js";
+import { OAuth2Client } from "google-auth-library";
 
 export const registerUser = asyncHandler(async (req, res) => {
   try {
     const { name, email, mobileNo, password, role } = req.body;
-    if(!name || !email || !password){
+    if (!name || !email || !password) {
       throw new ApiError(400, "Name, email, and password are required.");
     }
-    
+
     // Normalize email to lowercase
     const normalizedEmail = email.toLowerCase().trim();
-    
+
     // Check if user already exists with this email
     const existingUserByEmail = await User.findOne({ email: normalizedEmail });
     if (existingUserByEmail) {
       throw new ApiError(400, "User already exists with this email.");
     }
-    
+
     // Check if user already exists with this mobile number (if provided)
     if (mobileNo) {
       const existingUserByMobile = await User.findOne({ mobileNo: mobileNo });
@@ -37,12 +38,12 @@ export const registerUser = asyncHandler(async (req, res) => {
       password,
       role,
     };
-    
+
     // Only add mobileNo if it's provided and not empty
     if (mobileNo && mobileNo.trim()) {
       userData.mobileNo = mobileNo.trim();
     }
-    
+
     const user = new User(userData);
     await user.save();
     res
@@ -55,8 +56,8 @@ export const registerUser = asyncHandler(async (req, res) => {
         new ApiResponse(
           error.statusCode || 500,
           null,
-          error.message || "Internal Server Error"
-        )
+          error.message || "Internal Server Error",
+        ),
       );
   }
 });
@@ -72,7 +73,7 @@ export const loginUser = asyncHandler(async (req, res) => {
     const user = await User.findOne({
       $or: [
         ...(normalizedEmail ? [{ email: normalizedEmail }] : []),
-        ...(mobileNo ? [{ mobileNo: mobileNo }] : [])
+        ...(mobileNo ? [{ mobileNo: mobileNo }] : []),
       ],
     });
     if (!user) {
@@ -105,8 +106,95 @@ export const loginUser = asyncHandler(async (req, res) => {
         new ApiResponse(
           error.statusCode || 500,
           null,
-          error.message || "Internal Server Error"
-        )
+          error.message || "Internal Server Error",
+        ),
+      );
+  }
+});
+
+export const googleAuth = asyncHandler(async (req, res) => {
+  try {
+    const { googleToken } = req.body;
+
+    if (!googleToken) {
+      throw new ApiError(400, "Google token is required");
+    }
+
+    // Verify the Google token
+    const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+    const ticket = await client.verifyIdToken({
+      idToken: googleToken,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    const { sub: googleId, email, name, picture } = payload;
+
+    if (!email) {
+      throw new ApiError(400, "Email not found in Google account");
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Check if user already exists
+    let user = await User.findOne({
+      $or: [{ email: normalizedEmail }, { googleId: googleId }],
+    });
+
+    if (user) {
+      // User exists - update googleId if not already set
+      if (!user.googleId) {
+        user.googleId = googleId;
+        user.authMethod = "google";
+        if (picture && !user.profilePicture) {
+          user.profilePicture = picture;
+        }
+        await user.save();
+      }
+    } else {
+      // Create new user
+      user = new User({
+        name: name || email.split("@")[0],
+        email: normalizedEmail,
+        googleId: googleId,
+        authMethod: "google",
+        profilePicture: picture || null,
+        role: "renter",
+      });
+      await user.save();
+    }
+
+    // Generate tokens
+    const accessToken = generateAccessToken(user._id);
+    const refreshToken = generateRefreshToken(user._id);
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          { user, accessToken },
+          user.createdAt
+            ? "Google login successful"
+            : "Google signup successful",
+        ),
+      );
+  } catch (error) {
+    res
+      .status(error.statusCode || 500)
+      .json(
+        new ApiResponse(
+          error.statusCode || 500,
+          null,
+          error.message || "Internal Server Error",
+        ),
       );
   }
 });
@@ -136,8 +224,8 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
         new ApiResponse(
           error.statusCode || 500,
           null,
-          error.message || "Internal Server Error"
-        )
+          error.message || "Internal Server Error",
+        ),
       );
   }
 });
@@ -158,16 +246,14 @@ export const logoutUser = asyncHandler(async (req, res) => {
         new ApiResponse(
           error.statusCode || 500,
           null,
-          error.message || "Internal Server Error"
-        )
+          error.message || "Internal Server Error",
+        ),
       );
   }
 });
 
-
-
 export const panelRegister = asyncHandler(async (req, res) => {
-  try{
+  try {
     const { name, email, mobileNo, password, role } = req.body;
     if (!name || !email || !password || !role || !mobileNo) {
       throw new ApiError(400, "All fields are required.");
@@ -176,15 +262,18 @@ export const panelRegister = asyncHandler(async (req, res) => {
     // Check if user already exists
     const existingUser = await Admin.findOne({ email });
     if (existingUser) {
-      throw new ApiError(400, "Admin or Manager already exists with this email.");
+      throw new ApiError(
+        400,
+        "Admin or Manager already exists with this email.",
+      );
     }
 
     const passkey =
       role === "admin"
         ? process.env.ADMIN_PASSKEY
         : role === "manager"
-        ? process.env.MANAGER_PASSKEY
-        : null;
+          ? process.env.MANAGER_PASSKEY
+          : null;
 
     if (!passkey || password !== passkey) {
       throw new ApiError(401, "Invalid passkey for the specified role.");
@@ -194,13 +283,15 @@ export const panelRegister = asyncHandler(async (req, res) => {
       email,
       passkey: password,
       role,
-      mobileNo
+      mobileNo,
     });
     await user.save();
 
-    res.status(201).json(
-      new ApiResponse(201, user, "Admin or Manager registered successfully")
-    );
+    res
+      .status(201)
+      .json(
+        new ApiResponse(201, user, "Admin or Manager registered successfully"),
+      );
   } catch (error) {
     res
       .status(error.statusCode || 500)
@@ -208,8 +299,8 @@ export const panelRegister = asyncHandler(async (req, res) => {
         new ApiResponse(
           error.statusCode || 500,
           null,
-          error.message || "Internal Server Error"
-        )
+          error.message || "Internal Server Error",
+        ),
       );
   }
 });
@@ -247,12 +338,15 @@ export const panelLogin = asyncHandler(async (req, res) => {
     });
 
     res.status(200).json(
-      new ApiResponse(200, {
-        user,
-        accessToken,
-      }, "Panel login successful")
+      new ApiResponse(
+        200,
+        {
+          user,
+          accessToken,
+        },
+        "Panel login successful",
+      ),
     );
-
   } catch (error) {
     res
       .status(error.statusCode || 500)
@@ -260,13 +354,11 @@ export const panelLogin = asyncHandler(async (req, res) => {
         new ApiResponse(
           error.statusCode || 500,
           null,
-          error.message || "Internal Server Error"
-        )
+          error.message || "Internal Server Error",
+        ),
       );
   }
 });
-
-
 
 export const updateUserProfile = asyncHandler(async (req, res) => {
   try {
@@ -300,8 +392,14 @@ export const updateUserProfile = asyncHandler(async (req, res) => {
 
     if (mobileNo && mobileNo.trim() !== user.mobileNo) {
       const existingMobile = await User.findOne({ mobileNo: mobileNo.trim() });
-      if (existingMobile && existingMobile._id.toString() !== userId.toString()) {
-        throw new ApiError(400, "Mobile number already in use by another account");
+      if (
+        existingMobile &&
+        existingMobile._id.toString() !== userId.toString()
+      ) {
+        throw new ApiError(
+          400,
+          "Mobile number already in use by another account",
+        );
       }
 
       updateData.mobileNo = mobileNo.trim();
@@ -325,7 +423,9 @@ export const updateUserProfile = asyncHandler(async (req, res) => {
     Object.assign(user, updateData);
     await user.save();
 
-    res.status(200).json(new ApiResponse(200, user, "Profile updated successfully"));
+    res
+      .status(200)
+      .json(new ApiResponse(200, user, "Profile updated successfully"));
   } catch (error) {
     res
       .status(error.statusCode || 500)
@@ -333,8 +433,8 @@ export const updateUserProfile = asyncHandler(async (req, res) => {
         new ApiResponse(
           error.statusCode || 500,
           null,
-          error.message || "Internal Server Error"
-        )
+          error.message || "Internal Server Error",
+        ),
       );
   }
 });
